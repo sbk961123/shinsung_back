@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: machbaseAPI
+Version: 1.1
+Summary: Machbase-Python3-API
+Home-page: http://www.machbase.com
+Author: machbase
+Author-email: support@machbase.com
+License: UNKNOWN
+Description: Python3 module for Machbase
+Platform: WINDOWS
