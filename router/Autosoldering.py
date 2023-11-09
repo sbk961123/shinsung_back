@@ -7,7 +7,7 @@ import json
 from datetime import datetime
 router = APIRouter()
 
-@router.post("/QualityPredictionSearch",tags=['TABBER'],summary='실시간 품질 예측 조회')
+@router.post("/AutoQualityPredictionSearch",tags=['AutoSoldering'],summary='AUTO 실시간 품질 예측 조회')
 async def QualityPredictionSearch(data:dict):
     try:
      sql = f'''
@@ -28,7 +28,7 @@ async def QualityPredictionSearch(data:dict):
      print("err...")
      return e
 
-@router.post("/processOptimal", tags=['TABBER'], summary='공정 최적값 조회 화면 조회')
+@router.post("/AutoprocessOptimal", tags=['AutoSoldering'], summary='AUTO 공정 최적값 조회 화면 조회')
 async def processOptimal(data:dict):
     try:
      pred,pred2 = pipeline2.target_optimization({data['facility']},'./tabber/pkl/model/model_xgb_tps.pkl',  './tabber/pkl/ohe/ohe_tps.gz', './tabber/pkl/scaler/scaler_tps.gz', 
@@ -54,7 +54,7 @@ async def processOptimal(data:dict):
      print("err...")
      return e
     
-@router.post("/QualityHistoryList", tags=['TABBER'],summary='실시간 품질 이력 조회')
+@router.post("/AutoQualityHistoryList", tags=['AutoSoldering'],summary='AUTO 실시간 품질 이력 조회')
 async def QualityHistoryList(data:dict):
     try:
      sql = f'''
@@ -76,7 +76,7 @@ async def QualityHistoryList(data:dict):
      print("err...")
      return e
     
-@router.post("/TrendChart", tags=['TABBER'], summary='trend chart')
+@router.post("/AutoTrendChart", tags=['AutoSoldering'], summary='AUTO trend chart')
 async def TrendChart(data:dict):
     try:
      sql = f'''
@@ -102,7 +102,7 @@ async def TrendChart(data:dict):
      print("err...")
      return e
 
-@router.post("/listBoxPlot",  tags=['TABBER'],summary='박스 플롯')
+@router.post("/AutolistBoxPlot",  tags=['AutoSoldering'],summary='AUTO 박스 플롯')
 async def listBoxPlot():
     try:
     #  임시로 모든 데이터 가져오기
@@ -122,7 +122,7 @@ async def listBoxPlot():
      print("err...")
      return e
 
-@router.post("/listHeatMap", tags=['TABBER'],summary='HeatMap')
+@router.post("/AutolistHeatMap", tags=['AutoSoldering'],summary='AUTO HeatMap')
 async def listHeatMap():
     try:
     #  임시로 모든 데이터 가져오기
@@ -143,7 +143,7 @@ async def listHeatMap():
      return e
 
 
-@router.post("/DataSet", tags=['TABBER'], summary='data 조회')
+@router.post("/AutoDataSet", tags=['AutoSoldering'], summary='AUTO data 조회')
 async def DataSet(data:dict):
     try:
      sql = f'''
@@ -163,7 +163,7 @@ async def DataSet(data:dict):
      print("err...")
      return e
     
-@router.post("/SubDataSet", tags=['TABBER'],summary='data 하단 그리드 조회')
+@router.post("/AutoSubDataSet", tags=['AutoSoldering'],summary='AUTO data 하단 그리드 조회')
 async def SubDataSet(data:dict):
     try:
      sql = f'''
