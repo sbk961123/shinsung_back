@@ -3,7 +3,7 @@ import uvicorn
 import json
 from tabber import pipeline
 import os
-from machDB import machbase
+import machbase
 from postgreeDB import postgresProcess,insert
 import psycopg2
 import time
@@ -63,7 +63,7 @@ def aiLearing(data):
 def TABBER(id):
      #마크베이스 가장 최신 판정 데이터 가져오기
      data = machbase.selectNowData(id) 
-     sql = f'''select jd."EQUIPNUM" ,jd."TO_TIME"  from "SS_AI".rtn_judge_data jd 
+     sql = f'''select jd."EQUIPNUM" ,jd."TO_TIME"  from "ss_ai".rtn_judge_data jd 
                where "EQUIPNUM" ='{id}'
                order by "TO_TIME" desc 
                limit 1'''
