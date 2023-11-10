@@ -17,6 +17,7 @@ def quality_predict(df):
     '''
     대상 컬럼 지정
     '''
+    '''
     df.rename(columns={
              'AUTOSOLDERING.MAIN_Z-LEFT':'MAIN_Z-LEFT',
              'AUTOSOLDERING.MAIN_Z-MIDDLE':'MAIN_Z-MIDDLE', 
@@ -41,9 +42,7 @@ def quality_predict(df):
              'AUTOSOLDERING.SUB6_PV_TEMP':'SUB6_PV_TEMP',
             'AUTOSOLDERING.PLC_COUNTER1':'PLC_COUNTER1'
             }, inplace=True)
-
-
-
+    '''
 
     
     input_cols = ['MAIN_Z-LEFT', 'MAIN_Z-MIDDLE', 'MAIN_Z-RIGHT',
@@ -56,7 +55,7 @@ def quality_predict(df):
     
 
 
-    df = df[input_cols]
+    df2 = df[input_cols]
 
 
 
@@ -64,7 +63,7 @@ def quality_predict(df):
     데이터 전처리 - 데이터 통계압축
     """
     # 컬럼별 통계값 계산
-    mean, std = df.mean(), df.std()
+    mean, std = df2.mean(), df2.std()
 
     # 인덱스명 변경
     mean.rename(lambda x: x + '_' + 'mean', inplace=True)
@@ -80,10 +79,7 @@ def quality_predict(df):
     auto_bound = pd.read_excel('auto_bound.xlsx', index_col=0)
 
     ## 컬럼별로 읽어내며 컬럼 전체가 이상치 여부 확인 for loop
-    for col in df_stat.columns:
-        
-        isoutlier_df=pd.DataFrame(data=None, columns=df_stat.columns)
-        isoutlier_df[col] = (df_stat.loc[0,col]> auto_bound.loc[col,'upper']) | (df_stat.loc[0,col]<auto_bound.loc[col,'lower'])
+    isoutlier_df = ((df_stat > auto_bound['upper']) | (df_stat < auto_bound['lower'])).astype(int)
 
     ## 각 행의 이상치 개수 합계 계산
     isoutlier_df['이상치개수'] = isoutlier_df.apply(np.sum, axis=1)
@@ -129,10 +125,10 @@ def quality_predict(df):
 
     # 품질판정 예측
     model = pd.read_pickle('./pkl/model/model_xgb_tps.pkl')
-    print(model)
+
     pred = model.predict(X_sc)
 
-    print(',,,,,,',pred)
+
 
     # 예측결과 인버스인코딩 진행
     le = joblib.load('./pkl/y_scaler/y_le_tps.gz')
@@ -142,10 +138,10 @@ def quality_predict(df):
     X['OK/NG']=''
     X['OK/NG_pred']=pred
     X['OK/NG']=df_stat2['OK/NG'][0]
-    #X['TO_TIME']=''
-    #X['TO_TIME']=df['TO_TIME']
-    #X['FR_TIME']=''
-    #X['FR_TIME']=df['FR_TIME']
+    X['TO_TIME']=''
+    X['TO_TIME']=df['TO_TIME']
+    X['FR_TIME']=''
+    X['FR_TIME']=df['FR_TIME']
     X['check']=''
     if pred == df_stat2['OK/NG'][0]:
         X['check'] = 'OK'

@@ -2,7 +2,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-from router import tabber
+from router import tabber,Autosoldering
 app = FastAPI()
 origins = ["*"]
 
@@ -17,6 +17,7 @@ app.add_middleware(
 )
 
 app.include_router(tabber.router)
+app.include_router(Autosoldering.router)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

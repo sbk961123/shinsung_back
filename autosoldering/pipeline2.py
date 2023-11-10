@@ -5,6 +5,7 @@ geneticalgorithm version = 1.0.2
 """
 
 
+from aifc import Aifc_read
 import pandas as pd
 import numpy as np
 import math
@@ -29,12 +30,9 @@ import warnings
 """
 
 
-def target_optimization(target_equip, model_file, ohe_file, scaler_file, stat_df, ok_prob=0.99):
+def target_optimization(model_file, scaler_file, stat_df, ok_prob=0.99):
     # 품질판정 예측모델 불러오기
     model = pd.read_pickle(model_file)
-
-    # 범주형 변수 인코더 불러오기
-    ohe = joblib.load(ohe_file)
 
     # 데이터 표준화 스케일러 불러오기
     scaler = joblib.load(scaler_file)
@@ -43,53 +41,54 @@ def target_optimization(target_equip, model_file, ohe_file, scaler_file, stat_df
     df_stat = pd.read_excel(stat_df, index_col=0)
 
     # 공정최적화 분석변수 정의
-    Xcols = ['TIME_PER_STRING(s)_mean', 
-             'BOTTOMPLATE01_TEMP_mean', 'BOTTOMPLATE01_TEMP_std',
-             'BOTTOMPLATE02_TEMP_mean', 'BOTTOMPLATE02_TEMP_std',
-             'BOTTOMPLATE03_TEMP_mean', 'BOTTOMPLATE03_TEMP_std',
-             'BOTTOMPLATE04_TEMP_mean', 'BOTTOMPLATE04_TEMP_std',
-             'BOTTOMPLATE05_TEMP_mean', 'BOTTOMPLATE05_TEMP_std',
-             'BOTTOMPLATE06_TEMP_mean', 'BOTTOMPLATE06_TEMP_std',
-             'BOTTOMPLATE07_TEMP_mean', 'BOTTOMPLATE07_TEMP_std',
-             'BOTTOMPLATE08_TEMP_mean', 'BOTTOMPLATE08_TEMP_std',
-             'BOTTOMPLATE09_TEMP_mean', 'BOTTOMPLATE09_TEMP_std',
-             'BOTTOMPLATE10_TEMP_mean', 'BOTTOMPLATE10_TEMP_std',
-             'EQUIPNUM_TABBER01A', 'EQUIPNUM_TABBER01B', 'EQUIPNUM_TABBER02A',
-             'EQUIPNUM_TABBER02B', 'EQUIPNUM_TABBER03A', 'EQUIPNUM_TABBER03B',
-             'EQUIPNUM_TABBER04A', 'EQUIPNUM_TABBER04B']
+    Xcols = ['MAIN_Z-LEFT_mean', 'MAIN_Z-LEFT_std', 'MAIN_Z-MIDDLE_mean',
+            'MAIN_Z-MIDDLE_std', 'MAIN_Z-RIGHT_mean', 'MAIN_Z-RIGHT_std',
+            'SUB1_CYCLE_TIME_mean', 'SUB1_CYCLE_TIME_std', 'SUB1_MAX_TEMP_mean',
+            'SUB1_MAX_TEMP_std', 'SUB1_PV_TEMP_mean', 'SUB1_PV_TEMP_std',
+            'SUB2_CYCLE_TIME_mean', 'SUB2_MAX_TEMP_mean', 'SUB2_MAX_TEMP_std',
+            'SUB2_PV_TEMP_mean', 'SUB2_PV_TEMP_std', 'SUB3_CYCLE_TIME_mean',
+            'SUB3_MAX_TEMP_mean', 'SUB3_MAX_TEMP_std', 'SUB3_PV_TEMP_mean',
+            'SUB3_PV_TEMP_std', 'SUB4_CYCLE_TIME_mean', 'SUB4_MAX_TEMP_mean',
+            'SUB4_MAX_TEMP_std', 'SUB4_PV_TEMP_std', 'SUB5_CYCLE_TIME_mean',
+            'SUB5_MAX_TEMP_mean', 'SUB5_MAX_TEMP_std', 'SUB6_CYCLE_TIME_mean',
+            'SUB6_MAX_TEMP_mean', 'SUB6_MAX_TEMP_std']
     # 변수 개수
     dim = len(Xcols)
-
     # 유전 알고리즘을 사용하기 위해 독립변수를 변환하는 함수 정의
-    # 0: 'TIME_PER_STRING(s)_mean',
-    # 1: 'BOTTOMPLATE01_TEMP_mean',
-    # 2: 'BOTTOMPLATE01_TEMP_std',
-    # 3: 'BOTTOMPLATE02_TEMP_mean',
-    # 4: 'BOTTOMPLATE02_TEMP_std',
-    # 5: 'BOTTOMPLATE03_TEMP_mean',
-    # 6: 'BOTTOMPLATE03_TEMP_std',
-    # 7: 'BOTTOMPLATE04_TEMP_mean',
-    # 8: 'BOTTOMPLATE04_TEMP_std',
-    # 9: 'BOTTOMPLATE05_TEMP_mean',
-    # 10: 'BOTTOMPLATE05_TEMP_std',
-    # 11: 'BOTTOMPLATE06_TEMP_mean',
-    # 12: 'BOTTOMPLATE06_TEMP_std',
-    # 13: 'BOTTOMPLATE07_TEMP_mean',
-    # 14: 'BOTTOMPLATE07_TEMP_std',
-    # 15: 'BOTTOMPLATE08_TEMP_mean',
-    # 16: 'BOTTOMPLATE08_TEMP_std',
-    # 17: 'BOTTOMPLATE09_TEMP_mean',
-    # 18: 'BOTTOMPLATE09_TEMP_std',
-    # 19: 'BOTTOMPLATE10_TEMP_mean',
-    # 20: 'BOTTOMPLATE10_TEMP_std',
-    # 21: 'EQUIPNUM_TABBER01A',
-    # 22: 'EQUIPNUM_TABBER01B',
-    # 23: 'EQUIPNUM_TABBER02A',
-    # 24: 'EQUIPNUM_TABBER02B',
-    # 25: 'EQUIPNUM_TABBER03A',
-    # 26: 'EQUIPNUM_TABBER03B',
-    # 27: 'EQUIPNUM_TABBER04A',
-    # 28 'EQUIPNUM_TABBER04B'    
+    
+    # 0 : 'MAIN_Z-LEFT_mean',
+    # 1 : 'MAIN_Z-LEFT_std', 
+    # 2 : 'MAIN_Z-MIDDLE_mean',
+    # 3 : 'MAIN_Z-MIDDLE_std',
+    # 4 : 'MAIN_Z-RIGHT_mean', 
+    # 5 : 'MAIN_Z-RIGHT_std',
+    # 6 : 'SUB1_CYCLE_TIME_mean', 
+    # 7 : 'SUB1_CYCLE_TIME_std', 
+    # 8 : 'SUB1_MAX_TEMP_mean',
+    # 9 : 'SUB1_MAX_TEMP_std', 
+    # 10 : 'SUB1_PV_TEMP_mean', 
+    # 11 : 'SUB1_PV_TEMP_std',
+    # 12 : 'SUB2_CYCLE_TIME_mean', 
+    # 13 : 'SUB2_MAX_TEMP_mean', 
+    # 14 : 'SUB2_MAX_TEMP_std',
+    # 15 : 'SUB2_PV_TEMP_mean', 
+    # 16 : 'SUB2_PV_TEMP_std', 
+    # 17 : 'SUB3_CYCLE_TIME_mean',
+    # 18 : 'SUB3_MAX_TEMP_mean', 
+    # 19 : 'SUB3_MAX_TEMP_std', 
+    # 20 : 'SUB3_PV_TEMP_mean',
+    # 21 : 'SUB3_PV_TEMP_std', 
+    # 22 : 'SUB4_CYCLE_TIME_mean', 
+    # 23 : 'SUB4_MAX_TEMP_mean',
+    # 24 : 'SUB4_MAX_TEMP_std', 
+    # 25 : 'SUB4_PV_TEMP_std', 
+    # 26 : 'SUB5_CYCLE_TIME_mean',
+    # 27 : 'SUB5_MAX_TEMP_mean', 
+    # 28 : 'SUB5_MAX_TEMP_std',
+    # 29 : 'SUB6_CYCLE_TIME_mean',
+    # 30 : 'SUB6_MAX_TEMP_mean', 
+    # 31 : 'SUB6_MAX_TEMP_std'   
+       
     def input_conversion(x_input):
         conversion = [float(x_input[0]), float(x_input[1]),
                       float(x_input[2]), float(x_input[3]),
@@ -101,49 +100,52 @@ def target_optimization(target_equip, model_file, ohe_file, scaler_file, stat_df
                       float(x_input[14]), float(x_input[15]),
                       float(x_input[16]), float(x_input[17]),
                       float(x_input[18]), float(x_input[19]),
-                      float(x_input[20]), 
-                      int(x_input[21]),
-                      int(x_input[22]), int(x_input[23]),
-                      int(x_input[24]), int(x_input[25]),
-                      int(x_input[26]), int(x_input[27]),
-                      int(x_input[28])]
+                      float(x_input[20]), float(x_input[21]),
+                      float(x_input[22]), float(x_input[23]),
+                      float(x_input[24]), float(x_input[25]),
+                      float(x_input[26]), float(x_input[27]),
+                      float(x_input[28]), float(x_input[29]),
+                      float(x_input[30]), float(x_input[31])
+                      ]
         return conversion
 
-    # 원핫인코더를 통해 설비명 변환
-    a,b,c,d,m,n,o,p = map(int, ohe.transform(pd.DataFrame(data=[target_equip], columns=['EQUIPNUM'])).flatten())
-
-    # 최적값을 찾고자 하는 변수의 서칭범위 설정
-    varbound = np.array([#[df_stat.loc['min', 'TIME_PER_STRING(s)_mean'], df_stat.loc['max', 'TIME_PER_STRING(s)_mean']],
-                         [df_stat.loc['min', 'TIME_PER_STRING(s)_mean'], 60],   # 최대 1분으로 제한
-                         [df_stat.loc['min', 'BOTTOMPLATE01_TEMP_mean'], df_stat.loc['max', 'BOTTOMPLATE01_TEMP_mean']], 
-                         [df_stat.loc['min', 'BOTTOMPLATE01_TEMP_std']+1, df_stat.loc['max', 'BOTTOMPLATE01_TEMP_std']], 
-                         [df_stat.loc['min', 'BOTTOMPLATE02_TEMP_mean'], df_stat.loc['max', 'BOTTOMPLATE02_TEMP_mean']],
-                         [df_stat.loc['min', 'BOTTOMPLATE02_TEMP_std']+1, df_stat.loc['max', 'BOTTOMPLATE02_TEMP_std']],
-                         [df_stat.loc['min', 'BOTTOMPLATE03_TEMP_mean'], df_stat.loc['max', 'BOTTOMPLATE03_TEMP_mean']], 
-                         [df_stat.loc['min', 'BOTTOMPLATE03_TEMP_std']+1, df_stat.loc['max', 'BOTTOMPLATE03_TEMP_std']], 
-                         [df_stat.loc['min', 'BOTTOMPLATE04_TEMP_mean'], df_stat.loc['max', 'BOTTOMPLATE04_TEMP_mean']],
-                         [df_stat.loc['min', 'BOTTOMPLATE04_TEMP_std']+1, df_stat.loc['max', 'BOTTOMPLATE04_TEMP_std']],
-                         [df_stat.loc['min', 'BOTTOMPLATE05_TEMP_mean'], df_stat.loc['max', 'BOTTOMPLATE05_TEMP_mean']],
-                         [df_stat.loc['min', 'BOTTOMPLATE05_TEMP_std']+1, df_stat.loc['max', 'BOTTOMPLATE05_TEMP_std']],
-                         [df_stat.loc['min', 'BOTTOMPLATE06_TEMP_mean'], df_stat.loc['max', 'BOTTOMPLATE06_TEMP_mean']], 
-                         [df_stat.loc['min', 'BOTTOMPLATE06_TEMP_std']+1, df_stat.loc['max', 'BOTTOMPLATE06_TEMP_std']], 
-                         [df_stat.loc['min', 'BOTTOMPLATE07_TEMP_mean'], df_stat.loc['max', 'BOTTOMPLATE07_TEMP_mean']],
-                         [df_stat.loc['min', 'BOTTOMPLATE07_TEMP_std']+1, df_stat.loc['max', 'BOTTOMPLATE07_TEMP_std']],
-                         [df_stat.loc['min', 'BOTTOMPLATE08_TEMP_mean'], df_stat.loc['max', 'BOTTOMPLATE08_TEMP_mean']], 
-                         [df_stat.loc['min', 'BOTTOMPLATE08_TEMP_std']+1, df_stat.loc['max', 'BOTTOMPLATE08_TEMP_std']], 
-                         [df_stat.loc['min', 'BOTTOMPLATE09_TEMP_mean'], df_stat.loc['max', 'BOTTOMPLATE09_TEMP_mean']],
-                         [df_stat.loc['min', 'BOTTOMPLATE09_TEMP_std']+1, df_stat.loc['max', 'BOTTOMPLATE09_TEMP_std']],
-                         [df_stat.loc['min', 'BOTTOMPLATE10_TEMP_mean'], df_stat.loc['max', 'BOTTOMPLATE10_TEMP_mean']],
-                         [df_stat.loc['min', 'BOTTOMPLATE10_TEMP_std']+1, df_stat.loc['max', 'BOTTOMPLATE10_TEMP_std']],
-                         [a,a],    # 제한조건. 설비명은 0,1로 받음    
-                         [b,b],
-                         [c,c],
-                         [d,d],
-                         [m,m],
-                         [n,n],
-                         [o,o],
-                         [p,p]
-                        ]) 
+  # 최적값을 찾고자 하는 변수의 서칭범위 설정
+    varbound = np.array([
+    
+                         [df_stat.loc['min', 'MAIN_Z-LEFT_mean'], df_stat.loc['max', 'MAIN_Z-LEFT_mean']], 
+                         [df_stat.loc['min', 'MAIN_Z-LEFT_std'], df_stat.loc['max', 'MAIN_Z-LEFT_std']],
+                         [df_stat.loc['min', 'MAIN_Z-MIDDLE_mean'], df_stat.loc['max', 'MAIN_Z-MIDDLE_mean']],
+                         [df_stat.loc['min', 'MAIN_Z-MIDDLE_std'], df_stat.loc['max', 'MAIN_Z-MIDDLE_std']],
+                         [df_stat.loc['min', 'MAIN_Z-RIGHT_mean'], df_stat.loc['max', 'MAIN_Z-RIGHT_mean']],
+                         [df_stat.loc['min', 'MAIN_Z-RIGHT_std'], df_stat.loc['max', 'MAIN_Z-RIGHT_std']],
+                         [df_stat.loc['min', 'SUB1_CYCLE_TIME_mean'], df_stat.loc['max', 'SUB1_CYCLE_TIME_mean']],
+                         [df_stat.loc['min', 'SUB1_CYCLE_TIME_std'], df_stat.loc['max', 'SUB1_CYCLE_TIME_std']],
+                         [df_stat.loc['min', 'SUB1_MAX_TEMP_mean'], df_stat.loc['max', 'SUB1_MAX_TEMP_mean']],
+                         [df_stat.loc['min', 'SUB1_MAX_TEMP_std'], df_stat.loc['max', 'SUB1_MAX_TEMP_std']],
+                         [df_stat.loc['min', 'SUB1_PV_TEMP_mean'], df_stat.loc['max', 'SUB1_PV_TEMP_mean']],
+                         [df_stat.loc['min', 'SUB1_PV_TEMP_std'], df_stat.loc['max', 'SUB1_PV_TEMP_std']],
+                         [df_stat.loc['min', 'SUB2_CYCLE_TIME_mean'], df_stat.loc['max', 'SUB2_CYCLE_TIME_mean']],
+                         [df_stat.loc['min', 'SUB2_MAX_TEMP_mean'], df_stat.loc['max', 'SUB2_MAX_TEMP_mean']],
+                         [df_stat.loc['min', 'SUB2_MAX_TEMP_std'], df_stat.loc['max', 'SUB2_MAX_TEMP_std']],
+                         [df_stat.loc['min', 'SUB2_PV_TEMP_mean'], df_stat.loc['max', 'SUB2_PV_TEMP_mean']],
+                         [df_stat.loc['min', 'SUB2_PV_TEMP_std'], df_stat.loc['max', 'SUB2_PV_TEMP_std']],
+                         [df_stat.loc['min', 'SUB3_CYCLE_TIME_mean'], df_stat.loc['max', 'SUB3_CYCLE_TIME_mean']],
+                         [df_stat.loc['min', 'SUB3_MAX_TEMP_mean'], df_stat.loc['max', 'SUB3_MAX_TEMP_mean']],
+                         [df_stat.loc['min', 'SUB3_MAX_TEMP_std'], df_stat.loc['max', 'SUB3_MAX_TEMP_std']],
+                         [df_stat.loc['min', 'SUB3_PV_TEMP_mean'], df_stat.loc['max', 'SUB3_PV_TEMP_mean']],
+                         [df_stat.loc['min', 'SUB3_PV_TEMP_std'], df_stat.loc['max', 'SUB3_PV_TEMP_std']],
+                         [df_stat.loc['min', 'SUB4_CYCLE_TIME_mean'], df_stat.loc['max', 'SUB4_CYCLE_TIME_mean']],
+                         [df_stat.loc['min', 'SUB4_MAX_TEMP_mean'], df_stat.loc['max', 'SUB4_MAX_TEMP_mean']],
+                         [df_stat.loc['min', 'SUB4_MAX_TEMP_std'], df_stat.loc['max', 'SUB4_MAX_TEMP_std']],
+                         [df_stat.loc['min', 'SUB4_PV_TEMP_std'], df_stat.loc['max', 'SUB4_PV_TEMP_std']],
+                         [df_stat.loc['min', 'SUB5_CYCLE_TIME_mean'], df_stat.loc['max', 'SUB5_CYCLE_TIME_mean']],
+                         [df_stat.loc['min', 'SUB5_MAX_TEMP_mean'], df_stat.loc['max', 'SUB5_MAX_TEMP_mean']],
+                         [df_stat.loc['min', 'SUB5_MAX_TEMP_std'], df_stat.loc['max', 'SUB5_MAX_TEMP_std']],
+                         [df_stat.loc['min', 'SUB6_CYCLE_TIME_mean'], df_stat.loc['max', 'SUB6_CYCLE_TIME_mean']],
+                         [df_stat.loc['min', 'SUB6_MAX_TEMP_mean'], df_stat.loc['max', 'SUB6_MAX_TEMP_mean']],
+                         [df_stat.loc['min', 'SUB6_MAX_TEMP_std'], df_stat.loc['max', 'SUB6_MAX_TEMP_std']],
+                
+                        ])  
 
     # 목표 판정값(OK)을 얻기 위한 최적 공정조건 도출
     def object_function_target(x_input, target_model=model):
@@ -186,23 +188,9 @@ def target_optimization(target_equip, model_file, ohe_file, scaler_file, stat_df
 
     # one-hot-encoded 설비명 역변환
     final_solution = ga_solution_df.copy()
-    equipnum_in_ohe = final_solution[ohe.get_feature_names_out()]                    #[0,0,0,0,0,0,0,0] 형태의 설비명  
-    final_solution['EQUIPNUM'] = ohe.inverse_transform(equipnum_in_ohe).flatten()    #TABBER00X 형태의 설비명
-    final_solution.drop(ohe.get_feature_names_out(), axis=1, inplace=True)           #원핫인코더 변환명으로 된 컬럼들 모두 삭제
 
-    cols = [ 'TIME_PER_STRING(s)_mean',
-             'BOTTOMPLATE01_TEMP_mean', 'BOTTOMPLATE01_TEMP_std', 
-             'BOTTOMPLATE02_TEMP_mean', 'BOTTOMPLATE02_TEMP_std', 
-             'BOTTOMPLATE03_TEMP_mean', 'BOTTOMPLATE03_TEMP_std', 
-             'BOTTOMPLATE04_TEMP_mean', 'BOTTOMPLATE04_TEMP_std', 
-             'BOTTOMPLATE05_TEMP_mean', 'BOTTOMPLATE05_TEMP_std', 
-             'BOTTOMPLATE06_TEMP_mean', 'BOTTOMPLATE06_TEMP_std', 
-             'BOTTOMPLATE07_TEMP_mean', 'BOTTOMPLATE07_TEMP_std', 
-             'BOTTOMPLATE08_TEMP_mean', 'BOTTOMPLATE08_TEMP_std', 
-             'BOTTOMPLATE09_TEMP_mean', 'BOTTOMPLATE09_TEMP_std', 
-             'BOTTOMPLATE10_TEMP_mean', 'BOTTOMPLATE10_TEMP_std']
 
-    final_solution[cols] = final_solution[cols].round(2)    
+    final_solution[Xcols] = final_solution[Xcols].round(2)    
 
 
 
