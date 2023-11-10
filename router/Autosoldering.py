@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from fastapi import FastAPI,APIRouter
 import pandas as pd
-from tabber import pipeline2,pipeline_box,pipeline_heat
+from autosoldering import pipeline2,pipeline_box2,pipeline_heat
 from postgreeDB import postgresProcess,insert
 import json
 from datetime import datetime
@@ -31,25 +31,27 @@ async def QualityPredictionSearch(data:dict):
 @router.post("/AutoprocessOptimal", tags=['AutoSoldering'], summary='AUTO 공정 최적값 조회 화면 조회')
 async def processOptimal(data:dict):
     try:
-     pred,pred2 = pipeline2.target_optimization({data['facility']},'./tabber/pkl/model/model_xgb_tps.pkl',  './tabber/pkl/ohe/ohe_tps.gz', './tabber/pkl/scaler/scaler_tps.gz', 
-                                 './tabber/Shinsung_Tabber_minmax table.xlsx')
+     pred,pred2 = pipeline2.target_optimization('./autosoldering/pkl/model/model_xgb_tps.pkl', './autosoldering/pkl/scaler/scaler_tps.gz', 
+                                 './autosoldering/Shinsung_AutoSoldering_minmax table.xlsx')
+
      pred_data = pred.to_dict('records') #딕셔너리 변환 
      db_insert_data = {
         'model_version': 'model_xgb_tps.pkl',
-        'ohe_version': 'ohe_tps.gz',
         'scaler_version': 'scaler_tps.gz',
-        'setting_file': 'Shinsung_Tabber_minmax table.xlsx',
-        'learning_to': datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+        'setting_file': 'Shinsung_AutoSoldering_minmax table.xlsx',
+        '조회된 시점': datetime.today().strftime("%Y-%m-%d %H:%M:%S")
                   }
      db_insert_data.update(pred_data[0]) #데이터 합치기
      for d in [db_insert_data]:
-        sql = insert.InsertQuery('rtn_opti_data',d)      
+        sql = insert.InsertQuery('rtn_opti_autosolder_data',d)    
      result = postgresProcess.postExecuteQuery(sql)
-     #insert 성공 
+    #  insert 성공 
+     print(sql)
+     print(result)
      if result['result']=='ok':
         return pred
      else :
-        return result
+        return []
     except Exception as e:
      print("err...")
      return e
@@ -102,7 +104,7 @@ async def TrendChart(data:dict):
      print("err...")
      return e
 
-@router.post("/AutolistBoxPlot",  tags=['AutoSoldering'],summary='AUTO 박스 플롯')
+@router.post("/AutolistBoxPlot", tags=['AutoSoldering'],summary='AUTO 박스 플롯')
 async def listBoxPlot():
     try:
     #  임시로 모든 데이터 가져오기
@@ -116,7 +118,7 @@ async def listBoxPlot():
      else:
          data = ''
      df = pd.DataFrame(data)
-     result = pipeline_box.box_plot_params(df)
+     result = pipeline_box2.box_plot_params(df)
      return result
     except Exception as e:
      print("err...")

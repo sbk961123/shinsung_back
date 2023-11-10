@@ -1,8 +1,7 @@
 from pipeline import quality_predict
 import pandas as pd
 
-df = pd.read_csv('auto_sample.csv')
-
+df = pd.read_csv('pipelinedata.csv')
 
 
 
