@@ -147,7 +147,8 @@ async def listHeatMap():
 async def DataSet(data:dict):
     try:
      sql = f'''
-           select to_char("learning_to",'yyyy-mm-dd') as "일자" ,count(*) as "총 데이터 수",count(case when "OK/NG" ='OK' then 1 end) as "OK", count(case when "OK/NG" ='NG' then 1 end) as "NG" from "ss_ai".tmp_relearning_data rjd  
+           select to_char("learning_to",'yyyy-mm-dd') as "일자" ,count(*) as "총 데이터 수",count(case when "OK/NG" ='OK' then 1 end) as "OK", count(case when "OK/NG" ='NG' then 1 end) as "NG" 
+           from "ss_ai".tmp_relearning_data rjd  
            where to_char("learning_to",'yyyy-mm-dd')
            between '{data['startDate']}' and '{data['endDate']}'
            group by to_char("learning_to",'yyyy-mm-dd')

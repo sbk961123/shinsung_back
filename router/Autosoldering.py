@@ -7,17 +7,17 @@ import json
 from datetime import datetime
 router = APIRouter()
 
-@router.post("/AutoQualityPredictionSearch",tags=['AutoSoldering'],summary='AUTO 실시간 품질 예측 조회')
-async def QualityPredictionSearch(data:dict):
+@router.get("/AutoQualityPredictionSearch",tags=['AutoSoldering'],summary='AUTO 실시간 품질 예측 조회')
+async def AutoQualityPredictionSearch():
     try:
      sql = f'''
       select  *
-      from ss_ai.rtn_judge_data trd 
-      where "EQUIPNUM" = '{data['facility']}'
-      and to_char("TO_TIME" ,'yyyy-mm-dd') = to_char(now(),'yyyy-mm-dd')
+      from ss_ai.rtn_autosoldering_data trd 
+      where to_char("TO_TIME" ,'yyyy-mm-dd') = to_char(now(),'yyyy-mm-dd')
       order by "TO_TIME"
             '''
      rs = postgresProcess.postQueryDataSet(sql)
+     print(sql)
      if rs["result"] == "ok":
          data = rs["data"] 
      else:
@@ -29,7 +29,7 @@ async def QualityPredictionSearch(data:dict):
      return e
 
 @router.post("/AutoprocessOptimal", tags=['AutoSoldering'], summary='AUTO 공정 최적값 조회 화면 조회')
-async def processOptimal(data:dict):
+async def AutoprocessOptimal(data:dict):
     try:
      pred,pred2 = pipeline2.target_optimization('./autosoldering/pkl/model/model_xgb_tps.pkl', './autosoldering/pkl/scaler/scaler_tps.gz', 
                                  './autosoldering/Shinsung_AutoSoldering_minmax table.xlsx')
@@ -57,14 +57,13 @@ async def processOptimal(data:dict):
      return e
     
 @router.post("/AutoQualityHistoryList", tags=['AutoSoldering'],summary='AUTO 실시간 품질 이력 조회')
-async def QualityHistoryList(data:dict):
+async def AutoQualityHistoryList(data:dict):
     try:
      sql = f'''
       select to_char("TO_TIME",'yyyy-mm-dd') as "일자" ,count(*) as "전체예측건수",count(case when "OK/NG" ='NG' then 1 end) as "PLC NG" ,count(case when "OK/NG_pred" ='NG' then 1 end) as "NG 예측" 
-      from ss_ai.rtn_judge_data rjd  
+      from ss_ai.rtn_autosoldering_data rjd  
       where to_char("TO_TIME",'yyyy-mm-dd')
       between '{data['startDate']}' and '{data['endDate']}'
-      and "EQUIPNUM" = '{data['facility']}'
       group by to_char("TO_TIME",'yyyy-mm-dd')
             '''
      rs = postgresProcess.postQueryDataSet(sql)
@@ -79,18 +78,17 @@ async def QualityHistoryList(data:dict):
      return e
     
 @router.post("/AutoTrendChart", tags=['AutoSoldering'], summary='AUTO trend chart')
-async def TrendChart(data:dict):
+async def AutoTrendChart(data:dict):
     try:
      sql = f'''
            select *
-           from ss_ai.tmp_relearning_data trd 
-           where "EQUIPNUM" ='{data['facility']}'
-           and learning_to 
-           between date_trunc('week', '{data['date']}'::timestamp)- interval '8 day' 
+           from ss_ai.tmp_autosolder_relearning_data trd 
+           where learning_to between date_trunc('week', '{data['date']}'::timestamp)- interval '8 day' 
            and date_trunc('week', '{data['date']}'::timestamp)- interval '1 day'  - interval '1 seconds'
            limit 1000;
             '''
      rs = postgresProcess.postQueryDataSet(sql)
+     print(sql)
  
      if rs["result"] == "ok":
          data = rs["data"] 
@@ -105,10 +103,10 @@ async def TrendChart(data:dict):
      return e
 
 @router.post("/AutolistBoxPlot", tags=['AutoSoldering'],summary='AUTO 박스 플롯')
-async def listBoxPlot():
+async def AutolistBoxPlot():
     try:
     #  임시로 모든 데이터 가져오기
-     sql = f'''select * from ss_ai.tmp_relearning_data trd 
+     sql = f'''select * from ss_ai.tmp_autosolder_relearning_data trd 
                '''
      #postgreeDB 저장된 마지막 데이터 가져오기
      rs = postgresProcess.postQueryDataSet(sql)
@@ -125,10 +123,10 @@ async def listBoxPlot():
      return e
 
 @router.post("/AutolistHeatMap", tags=['AutoSoldering'],summary='AUTO HeatMap')
-async def listHeatMap():
+async def AutolistHeatMap():
     try:
     #  임시로 모든 데이터 가져오기
-     sql = f'''select * from ss_ai.tmp_relearning_data trd 
+     sql = f'''select * from ss_ai.tmp_autosolder_relearning_data trd 
                '''
      #postgreeDB 저장된 마지막 데이터 가져오기
      rs = postgresProcess.postQueryDataSet(sql)
@@ -146,15 +144,17 @@ async def listHeatMap():
 
 
 @router.post("/AutoDataSet", tags=['AutoSoldering'], summary='AUTO data 조회')
-async def DataSet(data:dict):
+async def AutoDataSet(data:dict):
     try:
      sql = f'''
-           select to_char("learning_to",'yyyy-mm-dd') as "일자" ,count(*) as "총 데이터 수",count(case when "OK/NG" ='OK' then 1 end) as "OK", count(case when "OK/NG" ='NG' then 1 end) as "NG" from "ss_ai".tmp_relearning_data rjd  
+           select to_char("learning_to",'yyyy-mm-dd') as "일자" ,count(*) as "총 데이터 수",count(case when "OK/NG" ='OK' then 1 end) as "OK", count(case when "OK/NG" ='NG' then 1 end) as "NG" 
+           from "ss_ai".tmp_autosolder_relearning_data rjd  
            where to_char("learning_to",'yyyy-mm-dd')
            between '{data['startDate']}' and '{data['endDate']}'
            group by to_char("learning_to",'yyyy-mm-dd')
             '''
      rs = postgresProcess.postQueryDataSet(sql)
+     print(sql)
  
      if rs["result"] == "ok":
          data = rs["data"] 
@@ -166,11 +166,11 @@ async def DataSet(data:dict):
      return e
     
 @router.post("/AutoSubDataSet", tags=['AutoSoldering'],summary='AUTO data 하단 그리드 조회')
-async def SubDataSet(data:dict):
+async def AutoSubDataSet(data:dict):
     try:
      sql = f'''
            select *
-           from "ss_ai".tmp_relearning_data
+           from "ss_ai".tmp_autosolder_relearning_data
            where to_char("learning_to",'yyyy-mm-dd') = '{data['date']}'
             '''
      rs = postgresProcess.postQueryDataSet(sql)
