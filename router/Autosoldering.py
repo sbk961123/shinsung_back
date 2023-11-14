@@ -17,7 +17,6 @@ async def AutoQualityPredictionSearch():
       order by "TO_TIME"
             '''
      rs = postgresProcess.postQueryDataSet(sql)
-     print(sql)
      if rs["result"] == "ok":
          data = rs["data"] 
      else:
@@ -46,8 +45,6 @@ async def AutoprocessOptimal(data:dict):
         sql = insert.InsertQuery('rtn_opti_autosolder_data',d)    
      result = postgresProcess.postExecuteQuery(sql)
     #  insert 성공 
-     print(sql)
-     print(result)
      if result['result']=='ok':
         return pred
      else :
@@ -105,14 +102,11 @@ async def AutoTrendChart(data:dict):
            and date_trunc('week', '{data['date']}'::timestamp)- interval '1 day'  - interval '1 seconds'
            limit 1000;
             '''
-     print(sql)
      rs = postgresProcess.postQueryDataSet(sql)
  
      if rs["result"] == "ok":
          data = rs["data"] 
-         print(data)
          df =pd.DataFrame(rs["data"])
-         print(df,'df')
         #  df = df.transpose() #행열변환
          data =df
      else:
@@ -174,7 +168,6 @@ async def AutoDataSet(data:dict):
            group by to_char("learning_to",'yyyy-mm-dd')
             '''
      rs = postgresProcess.postQueryDataSet(sql)
-     print(sql)
  
      if rs["result"] == "ok":
          data = rs["data"] 
