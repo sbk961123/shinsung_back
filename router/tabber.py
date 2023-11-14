@@ -95,6 +95,7 @@ async def TrendChart(data:dict):
          df =pd.DataFrame(rs["data"])
         #  df = df.transpose() #행열변환
          data =df
+         print(df)
      else:
          data = {}
      return data

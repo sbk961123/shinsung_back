@@ -81,18 +81,38 @@ async def AutoQualityHistoryList(data:dict):
 async def AutoTrendChart(data:dict):
     try:
      sql = f'''
-           select *
-           from ss_ai.tmp_autosolder_relearning_data trd 
+           select 
+             "MAIN_Z-LEFT_mean",
+             "MAIN_Z-MIDDLE_mean",
+             "MAIN_Z-RIGHT_mean",
+             "SUB1_CYCLE_TIME_mean",
+             "SUB1_MAX_TEMP_mean",
+             "SUB1_PV_TEMP_mean",
+             "SUB2_CYCLE_TIME_mean",
+             "SUB2_MAX_TEMP_mean",
+             "SUB2_PV_TEMP_mean",
+             "SUB3_CYCLE_TIME_mean",
+             "SUB3_MAX_TEMP_mean",
+             "SUB3_PV_TEMP_mean",
+             "SUB4_CYCLE_TIME_mean",
+             "SUB4_MAX_TEMP_mean",
+             "SUB5_CYCLE_TIME_mean",
+             "SUB5_MAX_TEMP_mean",
+             "SUB6_CYCLE_TIME_mean",
+             "SUB6_MAX_TEMP_mean"
+           from "ss_ai".tmp_autosolder_relearning_data trd 
            where learning_to between date_trunc('week', '{data['date']}'::timestamp)- interval '8 day' 
            and date_trunc('week', '{data['date']}'::timestamp)- interval '1 day'  - interval '1 seconds'
            limit 1000;
             '''
-     rs = postgresProcess.postQueryDataSet(sql)
      print(sql)
+     rs = postgresProcess.postQueryDataSet(sql)
  
      if rs["result"] == "ok":
          data = rs["data"] 
+         print(data)
          df =pd.DataFrame(rs["data"])
+         print(df,'df')
         #  df = df.transpose() #행열변환
          data =df
      else:
