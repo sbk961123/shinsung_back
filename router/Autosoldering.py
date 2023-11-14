@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from fastapi import FastAPI,APIRouter
 import pandas as pd
-from autosoldering import pipeline2,pipeline_box2,pipeline_heat
+from autosoldering import pipeline2,pipeline_box2,pipeline_heat,accyracy
 from postgreeDB import postgresProcess,insert
 import json
 from datetime import datetime
@@ -57,16 +57,18 @@ async def AutoprocessOptimal(data:dict):
 async def AutoQualityHistoryList(data:dict):
     try:
      sql = f'''
-      select to_char("TO_TIME",'yyyy-mm-dd') as "일자" ,count(*) as "전체예측건수",count(case when "OK/NG" ='NG' then 1 end) as "PLC NG" ,count(case when "OK/NG_pred" ='NG' then 1 end) as "NG 예측" 
+      select "OK/NG" ,"OK/NG_pred" ,to_char("TO_TIME",'YYYY-MM-DD') as "TIME"
       from ss_ai.rtn_autosoldering_data rjd  
       where to_char("TO_TIME",'yyyy-mm-dd')
       between '{data['startDate']}' and '{data['endDate']}'
-      group by to_char("TO_TIME",'yyyy-mm-dd')
+      order by "TO_TIME"
             '''
      rs = postgresProcess.postQueryDataSet(sql)
- 
+     #데이터 조회
      if rs["result"] == "ok":
-         data = rs["data"] 
+        df = pd.DataFrame(rs["data"])
+        acc = accyracy.accuracy_tabber(df)
+        data = acc.to_dict('records')
      else:
          data = ''
      return data

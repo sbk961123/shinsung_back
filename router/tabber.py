@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from fastapi import FastAPI,APIRouter
 import pandas as pd
-from tabber import pipeline2,pipeline_box,pipeline_heat
+from tabber import pipeline2,pipeline_box,pipeline_heat,accyracy
 from postgreeDB import postgresProcess,insert
 import json
 from datetime import datetime
@@ -58,17 +58,19 @@ async def processOptimal(data:dict):
 async def QualityHistoryList(data:dict):
     try:
      sql = f'''
-      select to_char("TO_TIME",'yyyy-mm-dd') as "일자" ,count(*) as "전체예측건수",count(case when "OK/NG" ='NG' then 1 end) as "PLC NG" ,count(case when "OK/NG_pred" ='NG' then 1 end) as "NG 예측" 
-      from ss_ai.rtn_judge_data rjd  
+      select "OK/NG" ,"OK/NG_pred" ,to_char("TO_TIME",'YYYY-MM-DD') as "TIME"
+      from ss_ai.rtn_judge_data  
       where to_char("TO_TIME",'yyyy-mm-dd')
       between '{data['startDate']}' and '{data['endDate']}'
       and "EQUIPNUM" = '{data['facility']}'
-      group by to_char("TO_TIME",'yyyy-mm-dd')
+      order by "TO_TIME"
             '''
      rs = postgresProcess.postQueryDataSet(sql)
- 
+     #데이터 조회
      if rs["result"] == "ok":
-         data = rs["data"] 
+        df = pd.DataFrame(rs["data"])
+        acc = accyracy.accuracy_tabber(df)
+        data = acc.to_dict('records')
      else:
          data = ''
      return data
@@ -89,7 +91,6 @@ async def TrendChart(data:dict):
            limit 1000;
             '''
      rs = postgresProcess.postQueryDataSet(sql)
- 
      if rs["result"] == "ok":
          data = rs["data"] 
          df =pd.DataFrame(rs["data"])
